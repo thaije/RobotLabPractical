@@ -1,21 +1,35 @@
+# Author        :   Tjalling Haije (s1011759)
+# Date          :   21-11-2017
+# Course        :   Robotlab Practical, Master AI, Radboud University
+# Description   :   This file makes a NAO robot randomly walk around, 
+#                   do a number of actions in random order, and say a number
+#                   of sentences in a random order.
+
+# How to run:
+# - connect to the robotlab wifi
+# - correct the IP address below
+# - python run.py
+
+
 import time
 import random
 import naoqi
 
 ip = "192.168.1.143"
 port = 9559
-duration = 115
+duration = 105
 
-# list of behaviours and postures
+# list of behaviours, postures and sentences
 behaviours = ["pointAndWalk", "robotDance", "wave", "randomPosture", "randomPosture", "lookAround", "squats"]
 postures = ["Stand", "Crouch"]
 random.shuffle(postures)
 sentences = ["Walking, walking", "When can I have a break?", "My joints are feeling a little stiff today", "Why is my camera disabled?", "Come to daddy", "Walking, walking"]
 
-# random behaviours:
+# Ideas for extra behaviours:
 # - Mime: oh no a wall, just kidding
 
 
+# Execute a behaviour
 def doBehaviour(behaviour, proxies):
     # global postures
 
@@ -35,6 +49,7 @@ def doBehaviour(behaviour, proxies):
 
     if behaviour is "robotDance":
         tts.say ("How you like my new move. I call it. The Robot.")
+        # raise arm
         joints = [ "LShoulderPitch", "LShoulderRoll"]
         angles = [ 2.08, 1.3]
         times = [ 1.0, 1.0]
@@ -42,6 +57,7 @@ def doBehaviour(behaviour, proxies):
         motionProxy.setStiffnesses(joints, 0.8 )
         motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
 
+        # set elbow at righ anle
         joints = ["LElbowRoll"]
         angles = [ -1.4]
         times = [ 1.0]
@@ -49,6 +65,7 @@ def doBehaviour(behaviour, proxies):
         motionProxy.setStiffnesses(joints, 0.8 )
         motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
 
+        # turn head
         speed = 0.5
         joints = ["HeadYaw", "HeadPitch"]
         angles = [1.5, 0.4]
@@ -57,6 +74,7 @@ def doBehaviour(behaviour, proxies):
         motionProxy.setStiffnesses("Head", 0.8)
         motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
 
+        # move elbow
         joints = ["LElbowRoll"]
         angles = [ [-1.5, -1.15, -1.54, -1.15, -1.54]]
         times = [ [1.5, 2.0, 2.5, 3.0, 3.5]]
@@ -66,6 +84,7 @@ def doBehaviour(behaviour, proxies):
 
 
     if behaviour is "wave":
+        # raise arm
         joints = [ "RShoulderRoll" , "RShoulderPitch" , "RElbowYaw" ,
         "RElbowRoll" , "RWristYaw",  "RHand" ]
         angles = [ -0.15 , -1.0 , -0.3 , -0.5 , -0.1, 1.0]
@@ -75,7 +94,7 @@ def doBehaviour(behaviour, proxies):
         motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
 
         tts.say ("Hello")
-
+        # wave
         joints = [ "RShoulderRoll" ]
         angles = [ -0.3 , 0.2, -0.3, 0.2]
         times = [ 1.0 , 1.5, 2.0, 2.5]
@@ -122,7 +141,7 @@ def doBehaviour(behaviour, proxies):
         motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
         tts.say ("Interesting")
 
-
+# Generate a shuffled list of all behaviours
 def getBehaviourList():
     # define the list so we can edit them
     localbehaviours = behaviours
@@ -130,6 +149,7 @@ def getBehaviourList():
     return localbehaviours
 
 def main():
+    # set proxies
     postureProxy = naoqi.ALProxy("ALRobotPosture", ip ,port )
     motionProxy = naoqi.ALProxy("ALMotion", ip ,port )
     tts = naoqi.ALProxy("ALTextToSpeech", ip , port )
@@ -142,15 +162,17 @@ def main():
     start = time.time()
     end = time.time()
 
+
     postureProxy.goToPosture("Stand" ,0.6667)
 
-
-    # continue with the presentation for 100 seconds
+    # continue with the presentation untill the maximum length has been reached
     while end - start < duration:
 
+        # reset the list if it is empty and all behaviours have been done
         if len(localbehaviours) is 0:
             localbehaviours = getBehaviourList()
 
+        # generate a random duration for the walk (3-7 seconds)
         walkDuration = random.randint(3, 7)
 
         # Make sure to stand
@@ -163,13 +185,16 @@ def main():
         motionProxy.moveToward(X, Y, Theta)
 
         print ("walk for %d seconds" % walkDuration)
+
+        # Say a random sentence during the walk and sleep for the duration of the
+        # walk
         time.sleep(walkDuration * 0.5)
         randomS = random.randint(0, len(sentences) - 1)
         tts.say (sentences[randomS])
         print (sentences[randomS])
         time.sleep(walkDuration * 0.5)
 
-        # stop
+        # stop walking
         motionProxy.stopMove()
 
         # do a random behaviour, and delete it from the list
@@ -185,7 +210,7 @@ def main():
 
     tts.say("This was my demonstration")
 
-    postureProxy.goToPosture("Stand" ,0.6667)
+    postureProxy.goToPosture("StandInit" ,0.6667)
     motionProxy.rest()
 
 
