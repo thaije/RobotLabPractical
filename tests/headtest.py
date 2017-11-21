@@ -1,5 +1,5 @@
 import naoqi
-ip = "192.168.1.138"
+ip = "192.168.1.143"
 port = 9559
 
 postureProxy = naoqi.ALProxy("ALRobotPosture", ip ,port )
