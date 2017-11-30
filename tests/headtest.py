@@ -1,13 +1,13 @@
 import naoqi
-ip = "192.168.1.143"
+ip = "192.168.1.102"
 port = 9559
 
 postureProxy = naoqi.ALProxy("ALRobotPosture", ip ,port )
 motionProxy = naoqi.ALProxy("ALMotion", ip ,port )
 
 # put in a stable position
-postureProxy.goToPosture("SitRelax", 0.8)
-motionProxy.rest()
+# postureProxy.goToPosture("Sit", 0.8)
+# motionProxy.rest()
 
 # http://doc.aldebaran.com/2-1/family/robots/bodyparts.html#nao-effector
 
@@ -25,9 +25,9 @@ motionProxy.rest()
 speed = 0.5
 joints = ["HeadYaw", "HeadPitch"]
 # joints = "HeadPitch"
-angles = [[-2.0, 2.0, 0], [-0.5, 0.5, 0]]
+angles = [[-1.0, 1.0, 0], [-0.2, 0]]
 # angles = [-0.6, 0.5, 0]
-times = [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]] #time in seconds
+times = [[2.0, 4.0, 5.0], [1.0, 5.0]] #time in seconds
 isAbsolute = True
 
 motionProxy.setStiffnesses("Head", 0.8)

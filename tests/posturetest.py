@@ -9,6 +9,6 @@ motionProxy = naoqi.ALProxy("ALMotion", ip ,port )
 
 postureProxy.goToPosture("Stand" ,0.6667)
 
-# postureProxy.goToPosture("SitRelax" ,0.6667)
+postureProxy.goToPosture("SitRelax" ,0.6667)
 
 motionProxy.rest()

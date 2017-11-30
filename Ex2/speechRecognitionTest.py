@@ -1,10 +1,3 @@
-# Author        :   Tjalling Haije (s1011759)
-# Date          :   21-11-2017
-# Course        :   Robotlab Practical, Master AI, Radboud University
-# Description   :   File which makes the robot to the words left, right
-#                   and stop.
-
-
 import time
 import sys
 

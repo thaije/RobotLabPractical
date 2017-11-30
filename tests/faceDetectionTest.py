@@ -1,4 +1,3 @@
-
 import time
 import sys
 
@@ -6,49 +5,62 @@ from naoqi import ALModule
 from naoqi import ALProxy
 from naoqi import ALBroker
 
-ip = "192.168.1.102"
+ip = "192.168.1.143"
 port = 9559
 
 memory = ALProxy("ALMemory", ip, port)
 tts = ALProxy("ALTextToSpeech", ip, port)
 
-# memory = ALProxy("ALMemory", ip, port)
-# tts = ALProxy("ALTextToSpeech", ip, port)
-#
-#
-# pythonBroker = ALBroker("pythonBroker","0.0.0.0", 9600, ip, port)
-# # facep = ALProxy("ALFaceDetection", ip, port)
-# # facep.subscribe("Test_Face", 500, 0.0)
-#
-# # val = memoryProxy.getData(memValue, 0)
-#
-# memory.subscribeToEvent("FaceDetected", "face", "faceCall")
 
-def faceCall( eventName, value, subscriberIdentifier):
-    print value
-    print "Detected face"
-    tts.say ("I see a face")
-    memory.unsubscribeToEvent("FaceDetected", "face")
-    pythonBroker.shutdown()
+class FaceRecognition(ALModule):
+
+    def __init__(self, name):
+        try:
+            p = ALProxy(name)
+            p.exit()
+        except:
+            pass
+
+        ALModule.__init__(self, name)
+        self.response = False
+        self.value = []
+        self.name = name
+
+        self.facep = ALProxy("ALFaceDetection", ip, port)
+        self.facep.subscribe("Test_Face", 500, 0.0)
+        memory.subscribeToEvent("FaceDetected", self.name, "faceCall")
+
+        print "initiliazed face recogntion"
+        tts.say ("Checking for faces")
 
 
-def main():
+
+    def faceCall(self, eventName, value, subscriberIdentifier):
+        memory.unsubscribeToEvent("FaceDetected", self.name)
+
+        self.value = value
+        print "Detected face"
+        tts.say ("Hello handsome")
+
+        memory.subscribeToEvent("FaceDetected", self.name, "faceCall")
+
+
+if __name__ == "__main__":
+
+    # fucks up the asr module, better to restart
+    # asr = ALProxy("ALSpeechRecognition", ip, port)
+    # asr.pause(True)
+
 
     pythonBroker = ALBroker("pythonBroker","0.0.0.0", 9600, ip, port)
-    memory.subscribeToEvent("FaceDetected", "face", "faceCall")
 
-    print "subscribed"
-    tts.say("Starting")
+    FaceDetector = FaceRecognition("FaceDetector")
 
     try:
         while True:
             time.sleep(1)
+
     except KeyboardInterrupt:
-        print
         print "Interrupted by user, shutting down"
         pythonBroker.shutdown()
         sys.exit(0)
-
-
-if __name__ == "__main__":
-    main()

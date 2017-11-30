@@ -1,0 +1,12 @@
+ Description   :   The run.py file makes a NAO robot randomly walk around,
+                   while reacting to touch (by default goes left), detects
+                   faces and reacts to speech commands
+
+                   At the moment the speech recognition is commented
+                   because it gives problems: the robot takes a
+                   full standing posture at random and loses its balance.
+                   I wasn't able to fully debug this, but to show it works
+                   seperatly I included the file SpeechRecognitionTest.py
+                   which only does the SpeechRecognition and works.
+                   To show the bugging behaviour in run.py please 
+                   uncomment line 212-214 in run.py
