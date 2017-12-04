@@ -2,205 +2,345 @@
 # Date          :   21-11-2017
 # Course        :   Robotlab Practical, Master AI, Radboud University
 # Description   :
+# How to run    :   fix IP, then: python run.py
+# TODO          :   - add sonar
 
-
-# How to run:
-
-
-
-import time
+from time import time, sleep
 import random
 import naoqi
+import camera
+import ReactToTouch.ReactToTouch as ReactToTouch
+import FaceRecognition.FaceRecognition as FaceRecognition
+import SpeechRecognition.SpeechRecognition as SpeechRecognition
 
 ip = "192.168.1.143"
 port = 9559
+
 duration = 105
 
+# walking variables
+walkSpeed = 0.6
+turnSpeed = 0.5
+blocked = False
+walking = False
+
+# camera variables
+resolution = 1
+resolutionX = 320
+resolutionY = 240
+ballThreshold = 50
+foundBall = False
+videoProxy = False
+cam = False
+
+# speech recognition variables
+wordlist = ["left", "right", "stop", "start"]
+
+# proxies
+postureProxy = naoqi.ALProxy("ALRobotPosture", ip ,port )
+motionProxy = naoqi.ALProxy("ALMotion", ip ,port )
+tts = naoqi.ALProxy("ALTextToSpeech", ip , port )
+memory = ALProxy("ALMemory", ip, port)
+ReactToTouch = False
+Speecher = False
+
+################################################################################
+# Class for recognizing speech
+################################################################################
+class SpeechRecognition(ALModule):
+
+    def __init__(self, name):
+        try:
+            p = ALProxy(name)
+            p.exit()
+        except:
+            pass
+
+        ALModule.__init__(self, name)
+        self.response = False
+        self.value = []
+        self.name = name
+        self.wordlist = []
+        self.wordspotting = False
+        self.spr = ALProxy("ALSpeechRecognition")
 
 
-# Execute a behaviour
-def doBehaviour(behaviour, proxies):
-    # global postures
+    def getSpeech(self, wordlist, wordspotting):
+        self.response = False
+        self.value = []
+        self.wordlist = wordlist
+        self.wordspotting = wordspotting
 
-    [postureProxy, motionProxy, tts] = proxies
-
-    if behaviour is "pointAndWalk":
-        joints = [ "RShoulderPitch", "RHand"]
-        angles = [ 0.0, 1]
-        times = [ 1.0, 1.0]
-        isAbsolute = True
-        motionProxy.setStiffnesses(joints, 0.8 )
-        motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
-        tts.say ("That looks interesting, let's go there")
-        time.sleep(1.0)
-        tts.say ("Or maybe not")
+        self.spr.setVocabulary(self.wordlist, self.wordspotting)
+        memory.subscribeToEvent("WordRecognized", self.name, "onDetect")
 
 
-    if behaviour is "robotDance":
-        tts.say ("How you like my new move. I call it. The Robot.")
-        # raise arm
-        joints = [ "LShoulderPitch", "LShoulderRoll"]
-        angles = [ 2.08, 1.3]
-        times = [ 1.0, 1.0]
-        isAbsolute = True
-        motionProxy.setStiffnesses(joints, 0.8 )
-        motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
+    def onDetect(self, keyname, value, subscriber_name):
+        memory.unsubscribeToEvent("WordRecognized", self.name)
+        self.spr.pause(True)
 
-        # set elbow at righ anle
-        joints = ["LElbowRoll"]
-        angles = [ -1.4]
-        times = [ 1.0]
-        isAbsolute = True
-        motionProxy.setStiffnesses(joints, 0.8 )
-        motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
+        self.response = True
+        self.value = value
+        print value[0]
+        tts.say ("I think you said. " + value[0])
 
-        # turn head
-        speed = 0.5
-        joints = ["HeadYaw", "HeadPitch"]
-        angles = [1.5, 0.4]
-        times = [1.0, 1.0]
-        isAbsolute = True
-        motionProxy.setStiffnesses("Head", 0.8)
-        motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
+        global blocked
+        if value[0] is "stop":
+            say("Command received, stopping")
+            stopWalking()
+            blocked = True
+            say(str)
 
-        # move elbow
-        joints = ["LElbowRoll"]
-        angles = [ [-1.5, -1.15, -1.54, -1.15, -1.54]]
-        times = [ [1.5, 2.0, 2.5, 3.0, 3.5]]
-        isAbsolute = True
-        motionProxy.setStiffnesses(joints, 0.8 )
-        motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
+        if value[0] is "left":
+            say("Looking left")
+            look("left")
 
+        if value[0] is "right":
+            say("Looking right")
+            look("right")
 
-    if behaviour is "wave":
-        # raise arm
-        joints = [ "RShoulderRoll" , "RShoulderPitch" , "RElbowYaw" ,
-        "RElbowRoll" , "RWristYaw",  "RHand" ]
-        angles = [ -0.15 , -1.0 , -0.3 , -0.5 , -0.1, 1.0]
-        times = [ 1.0, 1.0 , 1.0 , 1.0 , 1.0 , 1.0]
-        isAbsolute = True
-        motionProxy.setStiffnesses(joints, 0.8 )
-        motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
+        if value[0] is "start" and not walking:
+            say("starting")
+            initRandomWalk()
 
-        tts.say ("Hello")
-        # wave
-        joints = [ "RShoulderRoll" ]
-        angles = [ -0.3 , 0.2, -0.3, 0.2]
-        times = [ 1.0 , 1.5, 2.0, 2.5]
-        isAbsolute = True
-        motionProxy.setStiffnesses(joints, 0.8 )
-        motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
+        self.getSpeech(self.wordlist, self.wordspotting)
+
+    def stop(self):
+        memory.unsubscribeToEvent("WordRecognized", self.name)
+        self.spr.pause(True)
 
 
-    if behaviour is "break":
-        tts.say ("Time for a break")
-        postureProxy.goToPosture("Sit" ,0.6667)
-        time.sleep(1.0)
-        tts.say ("Okay let's continue")
+
+################################################################################
+# Class for catching touch events
+################################################################################
+class ReactToTouch(ALModule):
+
+    def __init__(self, name):
+        try:
+            p = ALProxy(name)
+            p.exit()
+        except:
+            pass
+        ALModule.__init__(self,name)
+
+        memory.subscribeToEvent("TouchChanged", name, "onTouched")
+        self.footTouched = False
 
 
-    if behaviour is "squats":
-        tts.say ("Let's do some squats")
-        postureProxy.goToPosture("Crouch" ,0.6667)
-        postureProxy.goToPosture("StandZero" ,0.6667)
-        postureProxy.goToPosture("Crouch" ,0.6667)
-        postureProxy.goToPosture("StandZero" ,0.6667)
-        tts.say ("Never skip leg day")
-        postureProxy.goToPosture("Crouch" ,0.6667)
-        postureProxy.goToPosture("StandZero" ,0.6667)
+    def onTouched(self, strVarName, value):
+        memory.unsubscribeToEvent("TouchChanged", "ReactToTouch")
+
+        # if touch is leftFoot or touch is rightFoot:
+        say("Oh no my foot hit something, avoiding")
+        avoid(True)
+        initRandomWalk()
+
+        touched_bodies = []
+        for p in value:
+            if p[1]:
+                touched_bodies.append(p[0])
+        print touched_bodies
+
+        memory.subscribeToEvent("TouchChanged", "ReactToTouch", "onTouched")
 
 
-    if behaviour is "randomPosture":
-        tts.say ("Time for a random posture")
 
-        # do the first posture from the list and remove it afterwards
-        print("Doing posture %s" % postures[0])
-        postureProxy.goToPosture(postures[0] ,0.6667)
-        del postures[0]
+################################################################################
+# Locomotion functions
+################################################################################
+def initRandomWalk():
+    say("Continuing")
+    motionProxy.moveToward(walkSpeed, 0, 0)
+    global walking, blocked
+    walking = True
+    blocked = False
 
 
-    if behaviour is "lookAround":
-        # move left, right and go back to center
-        speed = 0.5
-        joints = "HeadYaw"
-        angles = [-2.0, 2.0, 0]
-        times = [1.0, 2.0, 4.0]
-        isAbsolute = True
-        motionProxy.setStiffnesses("Head", 0.8)
-        motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
-        tts.say ("Interesting")
+def stopWalking():
+    motionProxy.stopMove()
+    global walking
+    walking = False
 
-# Generate a shuffled list of all behaviours
-def getBehaviourList():
-    # define the list so we can edit them
-    localbehaviours = behaviours
-    random.shuffle(localbehaviours)
-    return localbehaviours
+
+def turn(theta, direction):
+    global walking
+    walking = True
+
+    # turn in which direction
+    if direction is "left":
+        motionProxy.moveToward(0, 0, turnSpeed * 1)
+    elif direction is "random":
+        leftRight = random.choice([-1, 1])
+        motionProxy.moveToward(0, 0, turnSpeed * leftRight)
+    elif direction is "right":
+        motionProxy.moveToward(0, 0, turnSpeed * -1)
+
+    # turn x degrees = wait n seconds
+    if theta is 45:
+        sleep(4)
+    stopMovement()
+
+
+def backwards():
+    stopWalking()
+
+    global walking
+    walking = True
+    motionProxy.moveToward(-1 * walkSpeed, 0, 0)
+    sleep(4)
+    stopWalking()
+
+
+def avoid(backward):
+    # block the main loop
+    global blocked
+    blocked = True
+
+    if backward:
+        backwards()
+    turn(45, "random")
+    initRandomWalk()
+
+################################################################################
+# Ball and looking functions
+################################################################################
+def onBallDetect(ballDetection):
+    global foundBall
+
+    if ballDetection is False:
+        # announce we lost the ball
+        if foundBall:
+            foundBall = False
+            say("Lost ball")
+    else:
+        # Announce that we found the ball
+        if not foundBall:
+            foundBall = True
+            say("Ball found")
+        # center on the ball
+        say("Centering on ball")
+        centerOnBall(ballDetection[0], ballDetection[1])
+
+
+# Try to center the ball (with a certain threshold)
+def centerOnBall(x, y):
+    if x > (xResolution/2 + ballThreshold):
+        look("left")
+    elif x < (xResolution/2 - ballThreshold):
+        look("right")
+    elif y > (yResolution/2 + ballThreshold):
+        look("up")
+    elif y < (yResolution/2 - ballThreshold):
+        look("down")
+
+
+# look left look right
+def lookAround():
+    speed = 0.5
+    joints = ["HeadYaw", "HeadPitch"]
+    angles = [[-1.0, 1.0, 0], [-0.2, 0]]
+    times = [[1.5, 3.0, 5.0], [1.0, 5.0]] #time in seconds
+    isAbsolute = True
+    motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
+
+
+# look a relative amount to the current head posture in a certain direction
+def look(direction):
+    speed = 0.5
+    joints = ["HeadYaw", "HeadPitch"]
+    isAbsolute = False
+    times = [[0.5], [0.5]] #time in seconds
+
+    # yaw = 0 # left (2) right (-2)
+    # pitch = 0 # up(-0.6) down (-0.5)
+    if direction is "left":
+        angles = [[-0.3], [0]]
+    if direction is "right":
+        angles = [[0.3], [0]]
+    elif direction is "up":
+        angles = [[0], [-0.2]]
+    elif direction is "down":
+        angles = [[0], [0.2]]
+
+    print "Looking ", direction
+    motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
+
+
+def say(str):
+    tts.say(str)
+    print(str)
+
+# def onSonarDetect():
+#     avoid(False)
+#     say("I sensed an object with sonar, avoiding")
+
+
+################################################################################
+# Main functions
+################################################################################
+def setup():
+    global videoProxy, cam, ReactToTouch, Speecher
+
+    pythonBroker = ALBroker("pythonBroker","0.0.0.0", 9600, ip, port)
+
+    # video processing
+    videoProxy, cam = camera.setupCamera(ip, port)
+
+    # # speecher
+    # Speecher = SpeechRecognition("Speecher")
+    # Speecher.getSpeech(wordlist, True)
+    # say("You can give me commands during walking, such as start, left, right or stop.")
+    #
+    # # Touch sensors
+    # ReactToTouch = ReactToTouch("ReactToTouch")
+
+    # Set robot to default posture
+    postureProxy.goToPosture("StandInit", 0.6667)
+    time.sleep(2)
+
 
 def main():
-    # set proxies
-    postureProxy = naoqi.ALProxy("ALRobotPosture", ip ,port )
-    motionProxy = naoqi.ALProxy("ALMotion", ip ,port )
-    tts = naoqi.ALProxy("ALTextToSpeech", ip , port )
-    proxies = [postureProxy, motionProxy, tts]
-
-    # define the list so we can edit them
-    localbehaviours = getBehaviourList()
+    global videoProxy, cam
+    setup()
 
     # start timer
-    start = time.time()
-    end = time.time()
+    start = time()
+    end = time()
 
+    try:
+        while end - start < duration:
 
-    postureProxy.goToPosture("Stand" ,0.6667)
+            # get and process a camera frame
+            image = camera.getFrame()
+            if image:
+                # Check if we can find a ball, and point the head towards it if so
+                ballDetected(camera.findBall(image))
 
-    # continue with the presentation untill the maximum length has been reached
-    while end - start < duration:
+            # close the video proxy and end the script if escape is pressed
+            if cv2.waitKey(33) == 27:
+                videoProxy.unsubscribe(cam)
+                break;
 
-        # look around 
+            # start a random walk
+            if not walking and not blocked:
+                initRandomWalk()
 
-        # generate a random duration for the walk (3-7 seconds)
-        walkDuration = random.randint(3, 7)
+            # look around if we are not doing much special
+            if not blocked and foundBall:
+                # look around
+                lookAround()
 
-        # Make sure to stand
-        postureProxy.goToPosture("StandInit", 0.6667)
+            # update time
+            end = time()
 
-        # walk in random direction for a random duration
-        X = random.random() * 2 -1
-        Y = random.random() * 2 -1
-        Theta = random.random() * 2 -1
-        motionProxy.moveToward(X, Y, Theta)
-
-        print ("walk for %d seconds" % walkDuration)
-
-        # Say a random sentence during the walk and sleep for the duration of the
-        # walk
-        time.sleep(walkDuration * 0.5)
-        randomS = random.randint(0, len(sentences) - 1)
-        tts.say (sentences[randomS])
-        print (sentences[randomS])
-        time.sleep(walkDuration * 0.5)
-
-        # stop walking
-        motionProxy.stopMove()
-
-        # do a random behaviour, and delete it from the list
-        postureProxy.goToPosture("StandInit", 0.6667)
-        print("Do behaviour %s" % localbehaviours[0])
-        doBehaviour(behaviours[0], proxies)
-        del localbehaviours[0]
-        print(localbehaviours)
-        print("\n")
-
-        # update time
-        end = time.time()
-
-    tts.say("This was my demonstration")
-
-    postureProxy.goToPosture("StandInit" ,0.6667)
-    motionProxy.rest()
-
-
-
-if __name__ == "__main__":
-    main()
+    except KeyboardInterrupt:
+        print "Interrupted by user, shutting down"
+    finally:
+        say("Shutting down after sitting")
+        videoProxy.unsubscribe(cam)
+        postureProxy.goToPosture("SitRelax", 0.6667)
+        motionProxy.rest()
+        Speecher.stop()
+        pythonBroker.shutdown()
+        sys.exit(0)
