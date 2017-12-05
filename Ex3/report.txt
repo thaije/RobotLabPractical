@@ -1,0 +1,34 @@
+Author      :   Tjalling Haije (s1011759)
+Date        :   05-12-2017
+Course      :   Robotlab Practical, Master AI, Radboud University
+Assignment  :   Assignment 3, ball tracking
+
+Description :   The code for this week is in 2 files, image processing
+                for detecting blue circular objects in camera.py, and the
+                main processes in run.py.
+
+                The main functionality is listed below:
+                - At the start, the robot asks for the user to say start, as to start the main loop.
+                - The robot will walk straight and look around with its head
+                  until it finds a blue ball, if so:
+                    - it stops walking, and tries to center the ball
+                    - if lost continue walking
+                - The robot reacts to its foot bumping, and does an avoiding
+                  maneuver i.e. backing up and turning.
+                - The robot avoids obstacles when the left or right sonars read
+                  less than 70cm two times in a row.
+                - Can react to commands:
+                    - stop = stop what he is doing, can still track ball
+                    - start = continue
+                    - left = look left
+                    - right = look right
+
+
+                Bugs / problems:
+                - the image processing is not very accurate, so phantom blue
+                  balls are detected in various places. I tried restricting the color
+                  range for blue but it doesn't help much.
+                - The sonars are not very accurate / don't respond very well
+                - The robot can get confused and react to it's own speech
+                - The look right / left command is sometimes overwritten by the
+                  periodic looking around behaviour.

@@ -1,3 +1,9 @@
+# Author        :   Tjalling Haije (s1011759)
+# Date          :   05-12-2017
+# Course        :   Robotlab Practical, Master AI, Radboud University
+# Description   :   Does image processing for tracking blue round objects
+# How to run    :   Don't run this file, run run.py
+
 import cv2
 import numpy as np
 import naoqi

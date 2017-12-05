@@ -1,9 +1,10 @@
 # Author        :   Tjalling Haije (s1011759)
-# Date          :   21-11-2017
+# Date          :   05-12-2017
 # Course        :   Robotlab Practical, Master AI, Radboud University
-# Description   :
-# How to run    :   fix IP, then: python run.py
-# TODO          :   - add sonar
+# Description   :   Makes the NAO walk around, track a blue ball, react to
+#                   speech commands and touch. For specifics see report.txt
+# How to run    :   fix ip variable, then: python run.py
+
 
 from time import time, sleep
 import random
