@@ -63,19 +63,19 @@ class SpeechRecognition(ALModule):
 if __name__ == "__main__":
 
     # fucks up the asr module, better to restart
-    # asr = ALProxy("ALSpeechRecognition", ip, port)
-    # asr.pause(True)
-
-    pythonBroker = ALBroker("pythonBroker","0.0.0.0", 9600, ip, port)
-    Speecher = SpeechRecognition("Speecher")
-    Speecher.getSpeech(["left", "right", "stop"], True)
-
-    try:
-        while True:
-            time.sleep(1)
-
-    except KeyboardInterrupt:
-        print "Interrupted by user, shutting down"
-        Speecher.stop()
-        pythonBroker.shutdown()
-        sys.exit(0)
+    asr = ALProxy("ALSpeechRecognition", ip, port)
+    asr.pause(True)
+    #
+    # pythonBroker = ALBroker("pythonBroker","0.0.0.0", 9600, ip, port)
+    # Speecher = SpeechRecognition("Speecher")
+    # Speecher.getSpeech(["left", "right", "stop"], True)
+    #
+    # try:
+    #     while True:
+    #         time.sleep(1)
+    #
+    # except KeyboardInterrupt:
+    #     print "Interrupted by user, shutting down"
+    #     Speecher.stop()
+    #     pythonBroker.shutdown()
+    #     sys.exit(0)

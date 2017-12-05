@@ -12,13 +12,12 @@ motionProxy = naoqi.ALProxy("ALMotion", ip ,port )
 # http://doc.aldebaran.com/2-1/family/robots/bodyparts.html#nao-effector
 
 # yaw = 0 # left (2) right (-2)
-# pitch = 0 # up(-0.6) down (-0.5)
+# pitch = 0 # up(-0.6) down (0.5)
 # speed = 0.6
 # joints = ["HeadYaw", "HeadPitch"]
 # angles = [yaw, pitch]
 
 # non blocking
-# motionProxy.setStiffnesses(joints, 0.8)
 # motionProxy.setAngles(joints, angles, speed)
 
 
@@ -30,5 +29,10 @@ angles = [[-1.0, 1.0, 0], [-0.2, 0]]
 times = [[2.0, 4.0, 5.0], [1.0, 5.0]] #time in seconds
 isAbsolute = True
 
+# motionProxy.setStiffnesses(joints, 0.8)
+
+
 motionProxy.setStiffnesses("Head", 0.8)
 motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
+
+motionProxy.rest()

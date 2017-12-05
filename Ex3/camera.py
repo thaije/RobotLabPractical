@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import naoqi
+import sys
 
 resolution = 1
 resolutionX = 320
@@ -21,7 +22,7 @@ def setupCamera(ip, port):
 
     cam = videoProxy.subscribeCamera(cam_name, cam_type, res, colspace, fps)
 
-    print "Succesfully connected"
+    print "Succesfully connected camera"
     return videoProxy, cam
 
 
@@ -33,8 +34,10 @@ def findBall(image):
 
     # image = cv2.imread("ballimage.png")
 
-    lower_blue = np.array([70,50,50], dtype=np.uint8)
-    upper_blue = np.array([170, 255, 255], dtype=np.uint8)
+    # lower_blue = np.array([70,50,50], dtype=np.uint8)
+    # upper_blue = np.array([170, 255, 255], dtype=np.uint8)
+    lower_blue = np.array([110,50,50], dtype=np.uint8)
+    upper_blue = np.array([130, 255, 255], dtype=np.uint8)
 
     hsvImage = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
@@ -76,7 +79,7 @@ def findBall(image):
     if not circles is None:
         circle = circles[0, :][0]
         # print circle
-        print "Ball at " , circle[0], ", ", circle[1], " with size", 2*circle[2]
+        # print "Ball at " , circle[0], ", ", circle[1], " with size", 2*circle[2]
         cv2.circle(image, (circle[0], circle[1]), circle[2], (0, 255, 0), 2)
         cv2.imshow("Result", image)
         return (circle[0], circle[1])
@@ -85,7 +88,7 @@ def findBall(image):
     return False
 
 
-def getFrame(videoProxy):
+def getFrame(videoProxy, cam):
     image = False
 
     try:
@@ -95,7 +98,8 @@ def getFrame(videoProxy):
         values = map(ord, list(image_container[6]))
         image = np.array(values, np.uint8).reshape((height, width, 3))
     except:
-        print "missed frame"
+        print "missed frame (or error)"
+        # print "Unexpected error:", sys.exc_info()[0]
         pass
 
     return image

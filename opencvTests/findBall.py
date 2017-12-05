@@ -5,7 +5,7 @@ import numpy as np
 # Apply a threshold
 ##################################
 
-image = cv2.imread("ballimage3.png")
+image = cv2.imread("../ballimage.png")
 
 lower_blue = np.array([70,50,50], dtype=np.uint8)
 upper_blue = np.array([170, 255, 255], dtype=np.uint8)
