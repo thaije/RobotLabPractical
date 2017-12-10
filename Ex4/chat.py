@@ -15,7 +15,7 @@ def test():
 
     print "Testing chat connection"
 
-    result = API.talk(user_key, app_id, host, botname, "test", session_id, recent=True)
+    result = API.talk(user_key, app_id, host, botname, "test alice", session_id, recent=True)
     session_id = result['sessionid']
 
     print "Chat test response:" , result['response']
