@@ -11,7 +11,8 @@ botname = "alice"
 session_id = False
 
 # get files of alice
-# print API.list_files(user_key, app_id, host, botname)
+def getFiles():
+    print API.list_files(user_key, app_id, host, botname)
 
 # upload AIML files etc to alice
 def uploadFiles():
@@ -40,7 +41,8 @@ def talk(input_text):
     return result['response']
 
 
-talk("Hello my name is Beata")
+uploadFiles()
+getFiles()
 
-
+# talk("Hello my name is Beata")
 # Hello, my name is Alice. What is your name?
