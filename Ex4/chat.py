@@ -24,7 +24,7 @@ def test():
 # send an API call to pandora bots
 def talk(input_text):
     result = API.talk(user_key, app_id, host, botname, input_text, session_id, recent=True)
-    print result['response']
+    # print result['response']
 
     return result['response']
 

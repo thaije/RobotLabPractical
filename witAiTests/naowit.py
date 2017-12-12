@@ -4,7 +4,7 @@ import httplib, StringIO, json
 from naoqi import ALBroker, ALProxy, ALModule
 from time import sleep
 
-ip = "192.168.1.102"
+ip = "192.168.1.143"
 port = 9559
 
 aup = ALProxy("ALAudioPlayer", ip ,port )
@@ -50,13 +50,18 @@ class NaoWitSpeech(ALModule):
         """
         subscribe for audio data.
         """
-        aup.post.playFile("/usr/share/naoqi/wav/begin_reco.wav")
         self.startWit()
+        print "starting.."
+        aup.post.playFile("/usr/share/naoqi/wav/begin_reco.wav")
+
         self.ALAudioDevice.subscribe(self.getName())
         sleep(duration)
         self.ALAudioDevice.unsubscribe(self.getName())
-        self.startUpload(self.saveFile)
+
+        print "ended"
         aup.post.playFile("/usr/share/naoqi/wav/end_reco.wav")
+
+        self.startUpload(self.saveFile)
 
 
     def startUpload(self, datafile):
@@ -76,14 +81,16 @@ class NaoWitSpeech(ALModule):
 if __name__ == "__main__":
     pythonBroker = ALBroker("PythonBroker", "0.0.0.0", 9600, ip, port)
     # variable and string has to be a unique name
-    WittyNao = NaoWitSpeech("WittyNao")
+    # WittyNao = NaoWitSpeech("WittyNao")
 
-    WittyNao.startAudioTest(1.5)
+    while True:
 
-    wit_response = WittyNao.reply
-    resp = json.loads(wit_response)
-    print resp
-    conf = resp["outcomes"][0]["confidence"]
-    txt = resp["outcomes"][0]["_text"]
-    print conf
-    print txt
+        WittyNao = NaoWitSpeech("WittyNao")
+        WittyNao.startAudioTest(3)
+        wit_response = WittyNao.reply
+        resp = json.loads(wit_response)
+        print resp
+        print "--------------------"
+
+        # break
+        sleep(2)
