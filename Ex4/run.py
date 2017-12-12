@@ -1,3 +1,12 @@
+# Author        :   Tjalling Haije (s1011759)
+# Date          :   13-12-2017
+# Course        :   Robotlab Practical, Master AI, Radboud University
+# Description   :   Lets NAO do a speed date by using Wit.AI for speech recognition,
+#                   a chatbot for replies and random gestures inbetween.
+#                   See report.txt for details
+# How to run    :   fix ip variable, then: python run.py
+
+
 from time import time, sleep
 import random, sys, httplib, StringIO, json
 from naoqi import ALModule, ALProxy, ALBroker
@@ -12,8 +21,11 @@ port = 9559
 duration = 200
 
 # human likeliness settings
-pBlinkHeadsearching = 0.1
-pBlinkGeneral = 0.1
+actionProbabilities = {"nod" : 0.1, "blink" : 0.15, "lookAway": 0.1}
+movedHeadAway = False
+lastHeadYaw = -1
+lastHeadPitch = -1
+
 
 # proxies
 postureProxy = ALProxy("ALRobotPosture", ip ,port )
@@ -71,9 +83,8 @@ class FaceRecognition(ALModule):
 
 
     def faceCall(self, eventName, value, subscriberIdentifier):
-        memory.unsubscribeToEvent("FaceDetected", self.name)
-
         global faceTracking
+        memory.unsubscribeToEvent("FaceDetected", self.name)
 
         # return if we don't need to track faces
         if not faceTracking:
@@ -84,22 +95,21 @@ class FaceRecognition(ALModule):
 
         # see docs for value object
         # http://doc.aldebaran.com/2-1/naoqi/peopleperception/alfacedetection.html
-
         # Test if NAO found a nose
         try:
             noseX = value[1][0][1][7][0]
             noseY = value[1][0][1][7][1]
-            print "Nose: x=", noseX, " y=", noseY
+            print "--->Nose at: x=", noseX, " y=", noseY
 
             if (faceInMiddle(noseX) and faceInMiddle(noseY)):
-                print "face centered"
+                print "------>Face centered on nose"
                 faceTracking = False
             else:
-                print "centering face"
+                print "------>Centering face on nose"
                 centerOnFace(noseX, noseY)
 
         except:
-            print "missed nose"
+            print "--->Found face but no nose"
             pass
 
         memory.subscribeToEvent("FaceDetected", self.name, "faceCall")
@@ -153,8 +163,10 @@ class NaoWitSpeech(ALModule):
         aup.post.playFile("/usr/share/naoqi/wav/begin_reco.wav")
         self.startWit()
         self.ALAudioDevice.subscribe(self.getName())
+
         # sleep(duration)
-        sleepAndBlink(duration, pBlinkGeneral)
+         wasteTimeHumanlike(duration, ["blink", "lookAway", "nod"])
+
         self.ALAudioDevice.unsubscribe(self.getName())
         aup.post.playFile("/usr/share/naoqi/wav/end_reco.wav")
         self.startUpload(self.saveFile)
@@ -169,9 +181,6 @@ class NaoWitSpeech(ALModule):
         response = conn.getresponse()
         data = response.read()
         self.reply = data
-        print data
-
-
 
 
 ################################################################################
@@ -194,9 +203,6 @@ def centerOnFace(x, y):
     if multiplHeadY == 0:
         multiplHeadY = 1
 
-    print "face in middle x:",  faceInMiddle(x)
-    print "face in middle y:", faceInMiddle(y)
-
     # look left
     if not faceInMiddle(x) and x > 0:
         headChange[0] = headChange[0] * 1 * multiplHeadX
@@ -213,14 +219,11 @@ def centerOnFace(x, y):
 
     # move the head to the new coordinates
     moveHead(headChange)
-    # -x = left,  +x right
-    # -y = top, +y = bottom
-
 
 
 # look left look right
 def lookAround():
-    print("looking around")
+    print("Looking around")
     speed = 0.5
     joints = ["HeadYaw", "HeadPitch"]
     angles = [[-1.0, 1.0, 0], [-0.2, 0]]
@@ -232,8 +235,7 @@ def lookAround():
 # look a relative amount to the current head posture in a certain direction
 def moveHead(headChange):
     [headChangeX, headChangeY] = headChange
-
-    print "Head change:", headChange
+    print "---------->Head change:", headChange
 
     speed = 0.5
     joints = ["HeadYaw", "HeadPitch"]
@@ -243,7 +245,6 @@ def moveHead(headChange):
     # We move the head a default amount horizontal/vertical, which is adapted
     # by how far the head is from the middle (further = larger headmovement)
     angles = [[defaultChangeX * headChangeX], [defaultChangeY * headChangeY]]
-
     motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
 
 
@@ -260,17 +261,79 @@ def blinkEyes():
     sleep(0.15)
     LED.on("FaceLeds")
 
-# sleep and blink at some random points during the waiting
-def sleepAndBlink(duration, probability):
+# nod head
+def nodHead():
+    speed = 0.5
+    joints = "HeadPitch"
+    isAbsolute = False
+    times = [0.4, 1.2, 1.6 ] #time in seconds
+
+    angles = [-0.25, 0.5, -0.25]
+    motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
+    blinkEyes()
+
+# move the head away, or back to the user
+def lookAway():
+    global movedHeadAway, lastHeadYaw,lastHeadPitch
+
+    speed = 0.5
+    joints = ["HeadYaw", "HeadPitch"]
+    times = [1.0, 1.0] #time in seconds
+    isAbsolute = False
+
+    angles = [-lastHeadYaw, -lastHeadPitch]
+
+    # move the head away
+    if not movedHeadAway:
+        lastHeadYaw = random.uniform(-0.7, 0.7)
+        lastHeadPitch = random.uniform(-0.2, 0.4)
+        angles = [lastHeadYaw, pitch]
+        movedHeadAway = True
+    # otherwise move the head back to the middle
+    else:
+        movedHeadAway = False
+
+    print("looking away/back")
+    motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
+    blinkEyes()
+
+
+# This function does a fancy sleep of duration x in small steps, and can do a
+# random action such as blink, nod, or looking away during the sleep to waste time
+def wasteTimeHumanlike(duration, actions):
     start = time()
     end = time()
 
-    # keep on sleeping / blinking untill the duration has passed
+    print "Wasting time human like"
+
+    # Loop untill the duration has passed
     while end - start < duration:
-        if decision(probability):
-            blinkEyes()
-        else:
+        actionDone = False
+        random.shuffle(actions)
+
+        # decide for each possible action randomly if we do it, we only execute
+        # max one action each loop
+        for action in actions:
+
+            # get the probability of this action
+            p = actionProbabilities(action)
+
+            # randomly decide if we do this action, and break the for loop if so
+            if decision(p):
+                actionDone = True
+                print "--->Do action:", action
+
+                if action == "blink":
+                    blinkEyes()
+                elif action == "nod":
+                    nodHead()
+                elif action == "lookAway":
+                    lookAway()
+                break
+        # if we did no action this loop, do a sleep
+        if not actionDone:
             sleep(0.15)
+
 
 ################################################################################
 # Main functions
@@ -301,27 +364,31 @@ def main():
     end = time()
 
     try:
+        print "Searching for face"
+
+        # first focus on face before continuing
         while faceTracking:
             # (maybe) blink eyes, and sleep otherwise
-            sleepAndBlink(0.15, pBlinkHeadsearching)
-            print "searching for face"
+            wasteTimeHumanlike(0.15, ["blink"])
+        print "Face found"
 
-        tts.say("Hello, my name is Alice. What is your name?")
+        tts.say("Hello, my name is Alice.)
+        blinkEyes()
+        tts.say("What is your name?")
+        blinkEyes()
 
         while end - start < duration:
-            sleepAndBlink(1.0, pBlinkGeneral)
-
             # Record audio, and send it to Wit.AI.
-            # Bugfix: rewrite the class to prevent recordings with slow moted speech
+            # Bugfix: rewrite the class to prevent recordings with slow motion speech
             WittyNao = NaoWitSpeech("WittyNao")
             WittyNao.startAudioTest(3)
             wit_response = WittyNao.reply
             resp = json.loads(wit_response)
 
             # Check if we got a reponse from Wit.AI, get a reply from our
-            # chatbot if so, and say it
+            # chatbot if so and say it
             if len(resp) == 3:
-                # print resp['_text']
+                print "User:", resp['_text']
                 reply = chat.talk(resp['_text'])
                 print "Chat reply: ", reply
                 tts.say(str(reply))
@@ -329,10 +396,18 @@ def main():
                 print "No response:", resp
                 tts.say("Sorry I didn't get that")
 
+            # waste some time for the user to think
+            wasteTimeHumanlike(1.0, ["blink", "lookAway"])
+
             # update time
             end = time()
 
+        # End
+        blinkEyes()
         tts.say("Unfortunatly our speeddate has to come to an end. It was nice talking to you.")
+        blinkEyes()
+        sleep(0.2)
+        blinkEyes()
 
     except KeyboardInterrupt:
         print "Interrupted by user, shutting down"

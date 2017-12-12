@@ -1,3 +1,5 @@
+# portable API for Pandora bots
+
 import requests
 
 host_base = "https://"

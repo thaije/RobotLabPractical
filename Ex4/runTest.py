@@ -7,6 +7,9 @@ chat.talk("Hello my name is Beata")
 # Hello, my name is Alice. What is your name?
 # talk("Hello my name is Beata")
 
+# how old are you, add question
+# bot_profile.aiml:<template><random><li>I was activated in 1995.</li><li>16 years.</li></random></template>
+
 
 # e.g. Tell me a joke
 # joke intent = clap hands

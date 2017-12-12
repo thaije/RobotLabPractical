@@ -1,0 +1,33 @@
+# Author        :   Tjalling Haije (s1011759)
+# Date          :   13-12-2017
+# Course        :   Robotlab Practical, Master AI, Radboud University
+
+Features:
+- Speeddating robot
+- Centers on the face of the date before starting
+- Speech recognition with Wit.ai
+- Is coupled to a chatbot (A.L.I.C.E.), so should be able to talk about quite some things.
+- Randomly blinks with eyes, looks away, or nods to user talking during date.
+
+Example questions/talk:
+- You look nervous
+- How old are you?
+- Where do you live?
+- Tell me a joke
+- Have you been smoking?
+- Do you like watching movies?
+- What is your favorite movie? / What is your favorite book?
+- What did you do yesterday?
+- Can you play music? -> Sing for me
+- Are you an emotional person?
+Or just in general you can say: "Ask me a question", or give a command such as "sing for me" or "tell me a joke"
+
+
+Bugs / difficulties:
+- Has struggles with non-English names (Wouter, Beata, Tjalling etc.). E.g. John works fine.
+- Has struggles in general with good voice recognition
+- Some gaps in knowledge
+
+
+How to run :
+- Fix ip variable, then: python run.py
