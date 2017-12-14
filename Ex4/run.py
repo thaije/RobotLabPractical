@@ -18,10 +18,10 @@ import chat
 # global variables
 ip = "192.168.1.143"
 port = 9559
-duration = 200
+duration = 120
 
 # human likeliness settings
-actionProbabilities = {"nod" : 0.1, "blink" : 0.15, "lookAway": 0.1}
+actionProbabilities = {"nod" : 0.05, "blink" : 0.15, "lookAway": 0.1}
 movedHeadAway = False
 lastHeadYaw = -1
 lastHeadPitch = -1
@@ -164,8 +164,8 @@ class NaoWitSpeech(ALModule):
         self.startWit()
         self.ALAudioDevice.subscribe(self.getName())
 
-        # sleep(duration)
-         wasteTimeHumanlike(duration, ["blink", "lookAway", "nod"])
+        # waste time, and at start don't immediatly nod
+        wasteTimeHumanlike(duration, ["blink", "lookAway", "nod"])
 
         self.ALAudioDevice.unsubscribe(self.getName())
         aup.post.playFile("/usr/share/naoqi/wav/end_reco.wav")
@@ -266,9 +266,8 @@ def nodHead():
     speed = 0.5
     joints = "HeadPitch"
     isAbsolute = False
-    times = [0.4, 1.2, 1.6 ] #time in seconds
-
-    angles = [-0.25, 0.5, -0.25]
+    times = [0.4, 0.8, 1.2, 1.6 ] #time in seconds
+    angles = [-0.25, 0.15, -0.15, 0.05]
     motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
     blinkEyes()
 
@@ -287,7 +286,7 @@ def lookAway():
     if not movedHeadAway:
         lastHeadYaw = random.uniform(-0.7, 0.7)
         lastHeadPitch = random.uniform(-0.2, 0.4)
-        angles = [lastHeadYaw, pitch]
+        angles = [lastHeadYaw, lastHeadPitch]
         movedHeadAway = True
     # otherwise move the head back to the middle
     else:
@@ -304,7 +303,7 @@ def wasteTimeHumanlike(duration, actions):
     start = time()
     end = time()
 
-    print "Wasting time human like"
+    print ("Wasting time human like for %.1f seconds" % duration)
 
     # Loop untill the duration has passed
     while end - start < duration:
@@ -316,7 +315,7 @@ def wasteTimeHumanlike(duration, actions):
         for action in actions:
 
             # get the probability of this action
-            p = actionProbabilities(action)
+            p = actionProbabilities[action]
 
             # randomly decide if we do this action, and break the for loop if so
             if decision(p):
@@ -334,17 +333,20 @@ def wasteTimeHumanlike(duration, actions):
         if not actionDone:
             sleep(0.15)
 
+        end = time()
+
 
 ################################################################################
 # Main functions
 ################################################################################
 def setup():
-    global pythonBroker, FaceDetector, WittyNao
+    global pythonBroker, FaceDetector
 
     # Set robot to default posture
-    motionProxy.setStiffnesses("Head", 0.8)
     postureProxy.goToPosture("Sit", 0.6667)
-    sleep(2)
+    motionProxy.rest()
+    motionProxy.setStiffnesses("Head", 0.8)
+
 
     pythonBroker = ALBroker("pythonBroker","0.0.0.0", 9600, ip, port)
 
@@ -354,8 +356,7 @@ def setup():
     # setup chatbot
     chat.test()
 
-def main():
-    global FaceDetector, WittyNao
+if __name__ == "__main__":
     setup()
     blinkEyes()
 
@@ -364,15 +365,29 @@ def main():
     end = time()
 
     try:
-        print "Searching for face"
 
+        # print "--3--"
+        # wasteTimeHumanlike(3.0, ["blink", "lookAway", "nod"])
+        # sleep(1)
+        #
+        # print "--3--"
+        # wasteTimeHumanlike(3.0, ["blink", "lookAway", "nod"])
+        # sleep(1)
+        #
+        # print "--3--"
+        # wasteTimeHumanlike(3.0, ["blink", "lookAway", "nod"])
+        # sleep(1)
+        #
+        # return
+
+        print "Searching for face"
         # first focus on face before continuing
         while faceTracking:
             # (maybe) blink eyes, and sleep otherwise
-            wasteTimeHumanlike(0.15, ["blink"])
+            wasteTimeHumanlike(0.25, ["blink"])
         print "Face found"
 
-        tts.say("Hello, my name is Alice.)
+        tts.say("Hello, my name is Alice.")
         blinkEyes()
         tts.say("What is your name?")
         blinkEyes()
@@ -419,7 +434,3 @@ def main():
         motionProxy.rest()
         pythonBroker.shutdown()
         sys.exit(0)
-
-
-if __name__ == "__main__":
-    main()
