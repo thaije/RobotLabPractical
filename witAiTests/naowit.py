@@ -81,7 +81,6 @@ class NaoWitSpeech(ALModule):
 if __name__ == "__main__":
     pythonBroker = ALBroker("PythonBroker", "0.0.0.0", 9600, ip, port)
     # variable and string has to be a unique name
-    # WittyNao = NaoWitSpeech("WittyNao")
 
     while True:
 

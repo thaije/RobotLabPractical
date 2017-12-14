@@ -22,6 +22,11 @@ def uploadFiles():
         result = API.upload_file(user_key, app_id, host, botname, filename)
         print result
 
+def downloadBot():
+    result = API.download_bot(user_key, app_id, host, botname)
+    print result
+
+
 def reset():
     API.debug_bot(user_key, app_id, host, botname, input_text, session_id, reset=True, recent=True)
 
@@ -29,20 +34,26 @@ def reset():
 def talk(input_text):
     global session_id
 
-    # result = API.talk(user_key, app_id, host, botname, input_text, session_id, recent=True)
-    result = API.debug_bot(user_key, app_id, host, botname, input_text, session_id, reset=False, trace=True, recent=True)
+    result = API.talk(user_key, app_id, host, botname, input_text, session_id, recent=True)
     print result['response']
 
-    print result['trace']
+    # result = API.debug_bot(user_key, app_id, host, botname, input_text, session_id, reset=False, trace=True, recent=True)
+    # print result['trace']
 
     if not session_id:
         session_id = result['sessionid']
 
     return result['response']
 
+def compileBot():
+    result = API.compile_bot(user_key, app_id, host, botname)
+    print result
 
-uploadFiles()
-getFiles()
+# uploadFiles()
+# getFiles()
+# downloadBot()
+# compileBot()
 
-# talk("Hello my name is Beata")
+talk("Tell me a joke")
+talk("I don't know")
 # Hello, my name is Alice. What is your name?

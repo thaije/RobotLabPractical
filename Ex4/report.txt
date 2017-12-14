@@ -15,7 +15,7 @@ Example questions/talk:
 - Where do you live?
 - Tell me a joke
 - Have you been smoking?
-- Do you like watching movies?
+- Do you like movies?
 - What is your favorite movie? / What is your favorite book?
 - What did you do yesterday?
 - Can you play music? -> Sing for me
