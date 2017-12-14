@@ -1,5 +1,4 @@
-
-import matplotlib
+import matplotlib.pyplot as plt
 
 # don't take all the data, but from 1/3 of the data up to 2/3
 # of the data
