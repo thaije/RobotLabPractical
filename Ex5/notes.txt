@@ -1,0 +1,44 @@
+# both hands have to be visible
+# holding your hands still means the end of a gesture
+# minimum time to recognize a gesture is a few seconds
+
+# Coordinates for human:
+#   X-axis: left(-) -> right(+)
+#   Y-axis: (top(+) -> bottom(-)
+
+# Coordinates seen from kinect:
+#   X-axis: left(+) -> right(-)
+#   Y-axis: (top(+) -> bottom(-)
+
+Gestures:
+
+Wave left arm:
+    hand.y > elbow.y
+    hand.x < elbow.x
+
+Wave right arm:
+    hand.y > elbow.y
+    hand.x > elbow.x
+
+
+https://www.youtube.com/watch?v=WcAuuMXZciM
+
+Halt: (2.19)
+    flat hand in 90 degrees
+
+Forward (2.55):
+    overhead sweep
+
+Double time: (3.10)
+    fist with 90 degrees elbow choot choot mf
+
+Map check:  (3.22)
+
+Rally point: (3.53)
+
+Enemy contact: (4.30)
+    weapon up
+
+Cease fire: (5.00)
+
+Thumbs up: (7.20)

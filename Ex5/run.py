@@ -62,36 +62,22 @@ def intro():
     blinkEyes()
     sleep(1)
     blinkEyes()
-    tts.say("Okay. Private Ryan. I will first introduce the three movements you will have to memorize.")
+    tts.say("Okay. Private Ryan. The three movements which will be tested are the following.")
     blinkEyes()
     blinkEyes()
 
     tts.say("First move is called: Halt")
-    blinkEyes()
     doHalt()
-    blinkEyes()
-    sleep(3)
-    blinkEyes()
-    postureProxy.goToPosture("StandInit", 0.6667)
-    blinkEyes()
+    sleep(1)
 
     tts.say("Second gesture is called: Map check")
-    blinkEyes()
     doMapCheck()
     blinkEyes()
-    sleep(3)
-    blinkEyes()
-    postureProxy.goToPosture("StandInit", 0.6667)
-    blinkEyes()
+    sleep(1)
 
     tts.say("Third gesture is called: Double-time")
-    blinkEyes()
     doDoubleTime()
-    blinkEyes()
-    sleep(3)
-    blinkEyes()
-    postureProxy.goToPosture("StandInit", 0.6667)
-    blinkEyes()
+    sleep(1)
 
 ################################################################################
 # Gesture examples functions
@@ -135,7 +121,7 @@ def main():
         score = 0
         for g in gestures:
             tts.say("Show me the gesture:" + g)
-            sleep(1)
+            sleep(2)
 
             index = 0
 
