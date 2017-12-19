@@ -10,7 +10,6 @@
 from time import time, sleep
 import random, sys, httplib, StringIO, json
 from naoqi import ALModule, ALProxy, ALBroker
-from time import sleep
 
 # our modules
 import chat
