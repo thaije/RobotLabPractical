@@ -1,8 +1,15 @@
+# Author        :   Tjalling Haije (s1011759)
+# Date          :   19-12-2017
+# Course        :   Robotlab Practical, Master AI, Radboud University
+# Description   :   This file contains all gestures and its constrains, and
+#                   checks the confidence for each gesture based on a set of
+#                   received skeleton data from the Kinect
+# How to run    :   Please run run.py instead
+
 import operator
 
-
 def checkGestures(confidenceThresholdGest, leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, rightElbow, head):
-    # check gestures
+    # check gestures against saved data
     haltConf = halt(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, rightElbow, head)
     mapCheckConf = mapCheck(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, rightElbow, head)
     dtConf = doubleTime(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, rightElbow, head)
@@ -30,19 +37,19 @@ def halt(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, rightElbow
 
     print "Check halt gesture"
 
-    # loop through the framesp
+    # loop through the frames with skeleton data
     for i in range(1, len(leftHand[0])):
+        # constrains
         constrain1 = abs(leftElbow[1][i] - leftShoulder[1][i]) # left elbow X ~ left shoulder X
         constrain2 = abs(leftHand[0][i] - leftElbow[0][i]) # left hand Y ~ left elbow Y
         print "--> Frame %d, Elb / Sh aligned %.3f , Hand / elbow aligned %.3f" % (i, constrain1, constrain2)
 
-        # check if satisfies the constrains
+        # check if constrains are satisfied
         if constrain1 < yThreshold and constrain2 < xThreshold:
             confidence = confidence + 1
             print "----> Confidence +1"
 
     print "--> Confidence:", confidence , " frames ", len(leftHand[0]), " conf2 ", float(confidence) / len(leftHand[0])
-
     return float(confidence) / len(leftHand[0])
 
 
@@ -52,39 +59,40 @@ def mapCheck(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, rightE
     xThreshold = 0.08
     yThreshold = 0.20
 
-
     print "Checking mapcheck gesture"
 
+    # loop through the frames with skeleton data
     for i in range(1, len(leftHand[0])):
+        # constrains
         constrain1 = leftHand[0][i] > leftElbow[0][i] # leftHandX > leftElbowX
         constrain2 = abs(leftHand[0][i] - rightHand[0][i]) # leftHandX ~ rightHandX
         constrain3 = abs(leftHand[1][i] - rightHand[1][i]) # leftHandY ~ rightHandY
         # constrain4 = rightHand[0][i] > rightElbow[0][i] # rightHandX > rightElbow
         constrain4 = True
-
         print "--> Frame ", i , " Constrains:", constrain1, constrain2, constrain3, constrain4
 
+        # check if constrains satisfied
         if constrain1 and constrain2 < yThreshold and constrain3 < yThreshold and constrain4:
             confidence += 1
             print "----> Confidence +1"
 
     print "--> confidence:", confidence , " frames ", len(leftHand[0]), " conf2 ", float(confidence) / len(leftHand[0])
-
     return float(confidence) / len(leftHand[0])
 
 
-# double time gesture
+# double time gesture, needs 3 repetitions (up+down) for 100% confidence
 def doubleTime(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, rightElbow, head):
     confidence = 0
     xThreshold = 0.12
-
     neededRepetitions = 3
     previousMovement = False
     repetitions = 0
 
     print "Checking doubletime gesture"
 
+    # loop through the frames of skeleton data
     for i in range(1, len(leftHand[0])):
+        # skeleton
         constrain1 = leftHand[1][i] > leftElbow[1][i] # leftHandY > leftHandElbow
         constrain2 = abs(leftHand[0][i] - leftElbow[0][i]) < xThreshold # leftHandX ~ leftElbowX
         constrain3a = leftElbow[1][i] > leftShoulder[1][i] # leftElbowY > leftShoulderY
@@ -95,7 +103,7 @@ def doubleTime(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, righ
         if not constrain1 or not constrain2:
             continue
 
-        # check the motion
+        # check the motion constrain
         if (not previousMovement and constrain3a) or (previousMovement == "down" and constrain3a):
             previousMovement = "up"
             print "----> Up"
@@ -104,12 +112,11 @@ def doubleTime(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, righ
             repetitions += 1
             print "----> Down. Repetitions +1"
 
-    # calc confidence
+    # calc confidence based on number of repetitions
     if repetitions > neededRepetitions:
         confidence = 1.0
     else:
         confidence = float(repetitions) / neededRepetitions
 
     print "--> Repetitions:", repetitions , " frames ", len(leftHand[0]), " conf2 ", confidence
-
     return confidence

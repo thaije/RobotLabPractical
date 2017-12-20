@@ -1,3 +1,10 @@
+# Author        :   Tjalling Haije (s1011759)
+# Date          :   19-12-2017
+# Course        :   Robotlab Practical, Master AI, Radboud University
+# Description   :   This file receives and records the skeleton data from the
+#                   kinect, and checks for any recognized gestures
+# How to run    :   Please run run.py instead
+
 import select, socket, time, json, math
 import matplotlib.pyplot as plt
 from gestures import *
@@ -16,9 +23,10 @@ LSHOULDER = 4
 
 confidenceThresholdGest = 0.5
 thresholdStillMoving = 0.025
-plotHands = True
+plotHands = False
 s = False
 
+# read in full buffer
 def fullRead(nbytes):
     chuncks = []
     bytes_read = 0
@@ -41,6 +49,7 @@ def recordGestures(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, 
     """
     Record a gesture
     """
+    # try to connect to Kinect server, and skip in case of any connection errors
     try:
         msg = s.recv(4)
         nbytes = int(float(msg))
@@ -52,7 +61,7 @@ def recordGestures(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, 
         pass
 
     # leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, rightElbow, head
-    # append the next skeleton Frame
+    # Append the joint data of the next skeleton frame to the corresponding list
     # lefthand
     leftHand[0].append(jskel[LHAND]["Position"]["X"])
     leftHand[1].append(jskel[LHAND]["Position"]["Y"])
@@ -75,9 +84,10 @@ def recordGestures(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, 
     head[0].append(jskel[LELBOW]["Position"]["X"])
     head[1].append(jskel[LELBOW]["Position"]["Y"])
 
+    # check if any gestures detected
     detected = detectGestures(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, rightElbow, head)
 
-    # This is a right-handed coordinate system that places a Kinect at the origin with the positive z-axis extending in the direction in which the Kinect is pointed. The positive y-axis extends upward, and the positive x-axis extends to the left. Placing a Kinect on a surface that is not level (or tilting the sensor) to optimize the sensor's field of view can generate skeletons that appear to lean instead of be standing upright.
+    # print some handy skeleton joint coordinates
     print '---'
     print "LHand:", jskel[LHAND]["Position"]["X"], jskel[LHAND]["Position"]["Y"], " RHAND:", jskel[RHAND]["Position"]["X"], jskel[RHAND]["Position"]["Y"]
     print "Lelbow:", jskel[LELBOW]["Position"]["X"], jskel[LELBOW]["Position"]["Y"], " Relbow:", jskel[RELBOW]["Position"]["X"], jskel[RELBOW]["Position"]["Y"]
@@ -93,16 +103,10 @@ def detectGestures(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, 
     gesture = None
     global plotHands
 
-    # if len(leftHand[0]) > 5:
-    #     confidence = halt(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, rightElbow, head)
-    #     print "stop"
-    #     gesture = "stop"
-
-    # if len(leftHand[0]) > 10 and plotHands:
-    #         print "plot that shit"
-    #         plotGesture(leftHand[0], leftHand[1], rightHand[0], rightHand[1])
-    #         plotHands = False
-
+    if len(leftHand[0]) > 10 and plotHands:
+        print "plot"
+        plotGesture(leftHand[0], leftHand[1], rightHand[0], rightHand[1])
+        plotHands = False
 
     print "Datapoints:", len(leftHand[0])
 
@@ -117,7 +121,7 @@ def detectGestures(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, 
 
         if LXstop and LYstop and RXstop and RYstop:
             print "Stopped, checking gestures"
-            # check gesing gestures
+            # call checkGestures from different file
             gesture = checkGestures(confidenceThresholdGest, leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, rightElbow, head)
             print "stop"
         else:
@@ -129,13 +133,14 @@ def detectGestures(leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, 
 def plotGesture(lx, ly, rx, ry):
     # don't take all the data, but from 1/3 of the data up to 2/3
     # of the data
-
     # begin = int( math.floor( len(rx) / 3) )
     # end = int((2 * math.floor( len(rx) / 3)) )
+
+    # take all data
     begin = 0
     end = int(len(rx)-1)
 
-    # plot the detected gesture
+    # plot the hand joint coordinates
     plt.plot( lx[begin:end] , ly[begin:end] , 'ro-' )
     plt.plot( lx[begin] , ly[begin] , 'bo' ,ms =10)
     plt.plot( lx[end] , ly[end] , 'o' ,ms=10 , c= 'black' )
@@ -165,7 +170,6 @@ def recognizeGestures():
     leftElbow = [[], []]
     rightElbow = [[], []]
     head = [[], []]
-
     # leftHand, rightHand, leftShoulder, rightShoulder, leftElbow, rightElbow, head
 
     while True:
@@ -178,7 +182,6 @@ def recognizeGestures():
                 break;
             else:
                 time.sleep(timeout)
-
         else:
             #nothing to read and not receiving anything
             time.sleep(timeout)

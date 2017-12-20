@@ -1,3 +1,10 @@
+# Author        :   Tjalling Haije (s1011759)
+# Date          :   19-12-2017
+# Course        :   Robotlab Practical, Master AI, Radboud University
+# Description   :   Lets NAO execute an exam for military gestures. Please see
+#                   report.txt for details.
+# How to run    :   Fix ip variable, then: python run.py
+
 from time import time, sleep
 import random, sys
 from naoqi import ALModule, ALProxy, ALBroker
@@ -37,7 +44,8 @@ def nodHead():
     motionProxy.angleInterpolation(joints, angles, times, isAbsolute)
     blinkEyes()
 
-# nod head
+
+# nod head no
 def nodHeadNo():
     speed = 0.5
     joints = "HeadYaw"
@@ -48,6 +56,7 @@ def nodHeadNo():
     blinkEyes()
 
 
+# introduction to the game
 def intro():
     blinkEyes()
     tts.say("Hello Private. My name is Lieutenant Jarvis and I will guide you through the military exam for combat gestures.")
@@ -59,7 +68,6 @@ def intro():
     aup.post.playFile("/usr/share/naoqi/wav/begin_reco.wav")
     sleep(2)
     aup.post.playFile("/usr/share/naoqi/wav/end_reco.wav")
-    blinkEyes()
     sleep(1)
     blinkEyes()
     tts.say("Okay. Private Ryan. The three movements which will be tested are the following.")
@@ -98,7 +106,7 @@ def setup():
     global pythonBroker, FaceDetector
 
     # Set robot to default posture
-    # postureProxy.goToPosture("StandInit", 0.6667)
+    postureProxy.goToPosture("StandInit", 0.6667)
     motionProxy.rest()
     motionProxy.setStiffnesses("Head", 0.8)
 
@@ -119,13 +127,14 @@ def main():
         blinkEyes()
 
         score = 0
+        # loop through our gestures
         for g in gestures:
             tts.say("Show me the gesture:" + g)
             sleep(2)
 
             index = 0
 
-            # Try to recognize the gesture, and retry if false
+            # Try to recognize the gesture, and give the user 1 retry if false
             while index < 2:
                 blinkEyes()
                 index += 1
@@ -139,21 +148,24 @@ def main():
 
                 if response == "notrecognized":
                     nodHeadNo()
-                    print "I didn't recognize that"
+                    tts.say("I didn't recognize that")
                 else:
                     nodHeadNo()
                     tts.say("That was the wrong gesture " + g)
 
                 if index == 1:
-                    tts.say("Let's try one more time")
+                    tts.say("Let's try one more time. Get ready")
                     sleep(2)
+                    tts.say("Start")
 
+        # looped through all the gestures
         blinkEyes()
         tts.say("That was the exam.")
         sleep(0.5)
+
+        # check score and give user feedback
         tts.say("Your score is. " + str(score) + ". Out of 3.")
         blinkEyes()
-
         if score == 3:
             tts.say("So you passed! Congratulations")
         else:
@@ -166,7 +178,7 @@ def main():
         print "Unexpected error:", sys.exc_info()[0] , ": ", str(e)
     finally:
         print("Shutting down after sitting")
-        # postureProxy.goToPosture("StandInit", 0.6667)
+        postureProxy.goToPosture("StandInit", 0.6667)
         motionProxy.rest()
         pythonBroker.shutdown()
         sys.exit(0)

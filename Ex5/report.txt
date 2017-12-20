@@ -1,14 +1,29 @@
-# both hands have to be visible
-# holding your hands still means the end of a gesture
-# minimum time to recognize a gesture is a few seconds
+# Author        :   Tjalling Haije (s1011759)
+# Date          :   20-12-2017
+# Course        :   Robotlab Practical, Master AI, Radboud University
 
+Features:
+- Recognizes 3 gestures
+- Nao gives feedback on gestures (correct / not recognized / wrong gesture)
+- For each gesture a confidence is calculated, the minimum threshold is 50% confidence for gestures
+- Whole exercise is presented by Nao in the form of a fun 'exam'
+- Gesture recognition is stopped after hands are held still, or 25 frames are recorded
 
+Gestures:
+- Halt
+- Double time (atleast 5x up-down. If Kinect just restarted should be done quite quickly)
+- Map check
+See the attached picture to see how they are done:
+These gestures are from this video
 https://www.youtube.com/watch?v=WcAuuMXZciM
 
-Halt: (2.19)
-    flat hand in 90 degrees
+Notes:
+- both hands have to be visible (not in pockets)
+- minimum time to recognize a gesture is a few seconds
+- check form of gesture (90-degree angle of elbows for halt, elbow above and below shoulder for double-time etc.)
 
-Double time: (3.10)
-    fist with 90 degrees elbow choot choot mf
-
-Map check:  (3.22)
+How to run :
+- Study gestures a bit
+- Fix ip of Nao in run.py
+- Restart Kinect if slow
+- python run.py
