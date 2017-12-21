@@ -25,7 +25,9 @@ reader = None
 exitProcess = False
 audioVolume = False
 
-
+################################################################################
+# Volume measurement
+################################################################################
 def volumeLevel(queue, exitProcess, audioVolume):
     aud = ALProxy("ALAudioDevice", ip ,port )
     aud.enableEnergyComputation()
@@ -43,6 +45,9 @@ def volumeLevel(queue, exitProcess, audioVolume):
     print name, " Exiting"
 
 
+################################################################################
+# Ball tracking
+################################################################################
 def writer2(queue, exitProcess):
     name = multiprocessing.current_process().name
     print name, " Starting"
@@ -53,6 +58,21 @@ def writer2(queue, exitProcess):
     print name, " Exiting"
 
 
+################################################################################
+# Communication functions
+################################################################################
+def changeEarLeds(intensity):
+    name = 'EarLeds'
+    red = 0.0
+    green = 0.0
+    blue = intensity
+    duration = 0.5
+    LED.fadeRGB(name, red, green, blue, duration)
+
+
+################################################################################
+# General functions
+################################################################################
 def setup():
     global q1, q2, volumeLevel, writer2, reader, exitProcess, audioVolume
 
@@ -74,12 +94,11 @@ def main():
     global exitProcess
 
     try:
-        print "test"
         volumeLevel.start()
         writer2.start()
         t=1
         while t < 10:
-            print "Volume level: ", audioVolume.value
+            # print "Volume level: ", audioVolume.value
             time.sleep(1)
             t += 1
 
@@ -98,7 +117,6 @@ def main():
         writer2.join()
         print  "Is wr1 alive?", volumeLevel.is_alive()
         print "Is wr2 alive?", writer2.is_alive()
-        # pythonBroker.shutdown()
         sys.exit(0)
 
 
