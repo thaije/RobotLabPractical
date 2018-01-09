@@ -95,6 +95,6 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         print "Caught KeyboardInterrupt, terminating processes"
-        writer1.join()
-        writer2.join()
-        reader.join()
+        writer1.terminate()
+        writer2.terminate()
+        reader.terminate()

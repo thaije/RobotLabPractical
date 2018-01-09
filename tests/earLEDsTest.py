@@ -1,7 +1,7 @@
 import sys
 from time import sleep
 from naoqi import ALProxy
-ip = "192.168.1.102"
+ip = "192.168.1.143"
 port = 9559
 
 try:
@@ -23,17 +23,18 @@ sleep(0.15)
 LED.on("FaceLeds")
 
 # fade to black
-name = 'EarLeds'
-red = 0.0
+name = 'FaceLeds'
+red = 1.0
 green = 0.0
 blue = 0.0
 duration = 0.5
 LED.fadeRGB(name, red, green, blue, duration)
 
 # fade to blue
+# only blue works on some robots
 name = 'EarLeds'
-red = 0.0
-green = 0.0
+red = 1.0
+green = 1.0
 blue = 1.0
 duration = 0.5
 LED.fadeRGB(name, red, green, blue, duration)

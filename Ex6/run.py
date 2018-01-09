@@ -3,7 +3,7 @@ from time import sleep
 from naoqi import ALProxy
 import camera
 
-ip = "192.168.1.102"
+ip = "192.168.1.143"
 port = 9559
 
 # camera variables
@@ -21,6 +21,10 @@ motionProxy = ALProxy("ALMotion", ip ,port )
 tts = ALProxy("ALTextToSpeech", ip , port )
 memory = ALProxy("ALMemory", ip, port)
 LED = ALProxy("ALLeds", ip, port)
+# global aud
+# aud = False
+# aud = ALProxy("ALAudioDevice", ip ,port )
+# aud.enableEnergyComputation()
 
 # general variables
 walkSpeed = 0.6
@@ -97,7 +101,7 @@ def movement(exitProcess, movementQueue):
         try:
             # get msg from queue.
             msg = movementQueue.get(True, time_out)
-            print "from movement queue received ", msg
+            # print "from movement queue received ", msg
 
             # -1 = stop order
             if msg == -1: #
@@ -168,16 +172,17 @@ def lookAround():
 # Volume measurement thread
 ################################################################################
 def volumeLevel(exitProcess, audioVolume):
-    aud = ALProxy("ALAudioDevice", ip ,port )
-    aud.enableEnergyComputation()
-
     name = multiprocessing.current_process().name
     print name, " Starting"
     i = 0
 
+    aud = ALProxy("ALAudioDevice", ip ,port )
+    aud.enableEnergyComputation()
+
     while not exitProcess.value:
         audioLevels = [aud.getFrontMicEnergy(), aud.getRightMicEnergy(), aud.getRearMicEnergy(), aud.getLeftMicEnergy()]
         audioVolume.value = max(audioLevels)
+        # audioVolume.value = 5000
         print "wr1 Audio level is: " , audioVolume.value
         sleep(0.5)
 
@@ -187,18 +192,20 @@ def volumeLevel(exitProcess, audioVolume):
 ################################################################################
 # Communication functions
 ################################################################################
-def changeEarLeds(intensity, color):
-    # need vol level of 5000 for high intensity light
-    if intensity > 5000:
+def changeLeds(intensity, color):
+    if intensity > 10000:
         intensity = 1.0
+    elif intensity < 1000:
+        intensity = 0
     else:
-        intensity = 0.5
+        intensity = intensity / 10000.0
 
-    name = 'EarLeds'
+    print "Changing face leds to intensity ", intensity, " and color", color
+    name = 'FaceLeds'
     red = intensity if color == "red" else 0.0
     blue = intensity if color == "blue" else 0.0
     green = intensity if color == "green" else 0.0
-    duration = 0.5
+    duration = 0.2
     LED.fadeRGB(name, red, green, blue, duration)
 
 
@@ -212,32 +219,39 @@ def setup():
     exitProcess = manager.Value('i', False)
     audioVolume = manager.Value('i', 0)
     ballLocation = manager.Value('i', -1)
-    movementQueue = multiprocessing.Queue()
+    # movementQueue = multiprocessing.Queue()
 
     print "setting up threads"
-    volumeLevel = multiprocessing.Process(name = "volume-measurement-proc", target=volumeLevel, args=(exitProcess, audioVolume))
-    ballDetection = multiprocessing.Process(name = "ball-detection-proc", target=ballDetection, args=(exitProcess, ballLocation))
-    movement = multiprocessing.Process(name = "movement-proc", target=movement, args=(exitProcess, movementQueue))
+    volumeLevel = multiprocessing.Process(name = "volume-measurement-proc", target=volumeLevel, args=(exitProcess, audioVolume,))
+    # ballDetection = multiprocessing.Process(name = "ball-detection-proc", target=ballDetection, args=(exitProcess, ballLocation))
+    # movement = multiprocessing.Process(name = "movement-proc", target=movement, args=(exitProcess, movementQueue))
 
 def main():
     setup()
 
-    global exitProcess, movementQueue
+    global exitProcess, movementQueue, audioVolume, ballLocation
+
 
     try:
         # start other threads
         volumeLevel.start()
-        ballDetection.start()
-        movement.start()
+        # ballDetection.start()
+        # movement.start()
 
         ballFound = False
         t=1
         while t < 10:
 
+            # print "Volumelevel is:", audioVolume.value
+            # changeLeds(audioVolume.value, "red")
+
+            print "Volumelevel is:", audioVolume.value
+            
             # give command to look around while the ball is not found
             if ballLocation == -1:
-                movementQueue.value = 5
-                changeEarLeds(volumeLevel, "red")
+                # movementQueue.value = 5
+                print "Volumelevel is:", audioVolume.value
+                # changeLeds(volumeLevel, "red")
                 if ballFound:
                     ballFound = False
 
@@ -245,18 +259,20 @@ def main():
             if ballLocation > -1:
                 # save in local variable and stop movement if ball was't found yet
                 if not ballFound:
-                    motionProxy.stopMove()
-                    movementQueue.value = -1
+                    # motionProxy.stopMove()
+                    # movementQueue.value = -1
                     ballFound = True
 
                 # ball centerd, nothing to do
                 if ballLocation == 0:
-                    changeEarLeds(volumeLevel, "green")
+                    # changeLeds(audioVolume.value, "green")
+                    pass
 
                 # if not centered yet, center
                 elif ballLocation > 0:
-                    movementQueue.value = ballLocation
-                    changeEarLeds(volumeLevel, "blue")
+                    # movementQueue.value = ballLocation
+                    # changeLeds(audioVolume.value, "blue")
+                    pass
 
             sleep(0.2)
             t += 0.2
@@ -271,15 +287,15 @@ def main():
     finally:
         print("Shutting down after sitting")
         exitProcess.value = True
-        postureProxy.goToPosture("Sit", 0.6667)
+        # postureProxy.goToPosture("Sit", 0.6667)
         motionProxy.rest()
         # clean up other threads
         volumeLevel.join()
-        ballDetection.join()
-        movement.join()
+        # ballDetection.join()
+        # movement.join()
         print  "Is volMeasr alive?", volumeLevel.is_alive()
-        print "Is ballDet alive?", ballDetection.is_alive()
-        print "Is movement alive?", movement.is_alive()
+        # print "Is ballDet alive?", ballDetection.is_alive()
+        # print "Is movement alive?", movement.is_alive()
         sys.exit(0)
 
 

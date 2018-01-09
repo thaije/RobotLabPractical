@@ -1,5 +1,10 @@
 import time
 from multiprocessing import Process, Manager, Value
+from naoqi import ALProxy
+
+ip = "192.168.1.143"
+port = 9559
+LED = ALProxy("ALLeds", ip, port)
 
 def foo(data, name=''):
     print type(data), data.value, name
