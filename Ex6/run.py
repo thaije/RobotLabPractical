@@ -3,14 +3,14 @@ from time import sleep
 from naoqi import ALProxy
 import camera
 
-ip = "192.168.1.143"
+ip = "192.168.1.137"
 port = 9559
 
 # camera variables
 resolution = 1
 resolutionX = 320
 resolutionY = 240
-ballThreshold = 25
+ballThreshold = 40
 foundBall = False
 videoProxy = False
 cam = False
@@ -21,32 +21,33 @@ motionProxy = ALProxy("ALMotion", ip ,port )
 tts = ALProxy("ALTextToSpeech", ip , port )
 memory = ALProxy("ALMemory", ip, port)
 LED = ALProxy("ALLeds", ip, port)
-# global aud
-# aud = False
-# aud = ALProxy("ALAudioDevice", ip ,port )
-# aud.enableEnergyComputation()
 
-# general variables
-walkSpeed = 0.6
 
-# declare global variables
-movement = None
-ballDetection = None
-volumeLevel = None
+# threads
+movementQueue = False
+ballDetectionProcess = None
+volLevelProcess = None
+
+# multi thread variables
 exitProcess = False
 audioVolume = False
-ballLocation = False # -1=not found, 0=centered, 1=top, 2=right, 3=bottom, 4=left
-movementQueue = False
+
+# global variables
+# ballDetected = False
+ballLocation = -1 # -1=not found, 0=centered, 1=top, 2=right, 3=bottom, 4=left
+movement = None
+walkSpeed = 0.6
+runtime = 20
 
 ################################################################################
 # Ball searching and looking / sensing functions
 ################################################################################
 def ballDetection(exitProcess, ballLocation):
-    name = multiprocessing.current_process().name
-    print name, " Starting"
-
     # video processing
     videoProxy, cam = camera.setupCamera(ip, port)
+
+    name = multiprocessing.current_process().name
+    print name, " Starting"
 
     while not exitProcess.value:
         # get and process a camera frame
@@ -57,31 +58,40 @@ def ballDetection(exitProcess, ballLocation):
             onBallDetect(ballDet, ballLocation)
         else:
             ballLocation.value = -1
+        pass
 
     print name, " Exiting"
 
-def onBallDetect(ballDetection, ballLocation):
-    if ballDetection is False:
+def onBallDetect(ballDetected, ballLocation):
+    if ballDetected is False:
         # announce we lost the ball
         if ballLocation.value > -1:
             ballLocation.value = -1
             tts.say("Lost ball")
     else:
         # Announce that we found the ball if we hadn't already
-        print("Found ball at ", ballDetection[0],  ballDetection[1]), ". Publishing location"
-        findBallLocation(ballDetection[0], ballDetection[1], ballLocation)
+        print("Found ball at ", ballDetected[1],  ballDetected[0]), ". Publishing location"
+        findBallLocation(ballDetected[1], ballDetected[0], ballLocation)
 
 
 # Save in a variable where the ball is to center the ball (with a certain threshold)
 def findBallLocation(x, y, ballLocation):
+    ## -1=not found, 0=centered, 1=top, 2=right, 3=bottom, 4=left
     if x > (resolutionX/2 + ballThreshold):
-        ballLocation.value(2)
+        print "left"
+        # ballLocation.value(4)
     elif x < (resolutionX/2 - ballThreshold):
-        ballLocation.value(4)
+        print "right"
+        # ballLocation.value(2)
     elif y > (resolutionY/2 + ballThreshold):
-        ballLocation.value(3)
+        print "bottom"
+        # ballLocation.value(3)
     elif y < (resolutionY/2 - ballThreshold):
-        ballLocation.value(1)
+        print "top"
+        # ballLocation.value(1)
+    else:
+        print "centered"
+        # ballLocation.value(0)
 
 
 
@@ -174,8 +184,8 @@ def lookAround():
 def volumeLevel(exitProcess, audioVolume):
     name = multiprocessing.current_process().name
     print name, " Starting"
-    i = 0
 
+    # global aud
     aud = ALProxy("ALAudioDevice", ip ,port )
     aud.enableEnergyComputation()
 
@@ -183,8 +193,8 @@ def volumeLevel(exitProcess, audioVolume):
         audioLevels = [aud.getFrontMicEnergy(), aud.getRightMicEnergy(), aud.getRearMicEnergy(), aud.getLeftMicEnergy()]
         audioVolume.value = max(audioLevels)
         # audioVolume.value = 5000
-        print "wr1 Audio level is: " , audioVolume.value
-        sleep(0.5)
+        # print "wr1 Audio level is: " , audioVolume.value
+        sleep(0.2)
 
     print name, " Exiting"
 
@@ -213,7 +223,8 @@ def changeLeds(intensity, color):
 # General functions
 ################################################################################
 def setup():
-    global volumeLevel, ballDetection, movement, exitProcess, audioVolume, ballLocation, movementQueue
+    global exitProcess, audioVolume, ballLocation, movementQueue
+    global volLevelProcess, ballDetectionProcess
 
     manager = multiprocessing.Manager()
     exitProcess = manager.Value('i', False)
@@ -221,10 +232,11 @@ def setup():
     ballLocation = manager.Value('i', -1)
     # movementQueue = multiprocessing.Queue()
 
-    print "setting up threads"
-    volumeLevel = multiprocessing.Process(name = "volume-measurement-proc", target=volumeLevel, args=(exitProcess, audioVolume,))
-    # ballDetection = multiprocessing.Process(name = "ball-detection-proc", target=ballDetection, args=(exitProcess, ballLocation))
+    print "Setting up threads"
+    volLevelProcess = multiprocessing.Process(name = "volume-measurement-proc", target=volumeLevel, args=(exitProcess, audioVolume,))
+    ballDetectionProcess = multiprocessing.Process(name = "ball-detection-proc", target=ballDetection, args=(exitProcess, ballLocation))
     # movement = multiprocessing.Process(name = "movement-proc", target=movement, args=(exitProcess, movementQueue))
+
 
 def main():
     setup()
@@ -234,24 +246,33 @@ def main():
 
     try:
         # start other threads
-        volumeLevel.start()
-        # ballDetection.start()
+        volLevelProcess.start()
+        ballDetectionProcess.start()
         # movement.start()
 
         ballFound = False
         t=1
-        while t < 10:
+        while t < runtime:
+
+            # get and process a camera frame
+            # image = camera.getFrame(videoProxy, cam)
+            # if image is not False:
+            #     # Check if we can find a ball, and publish the location if so
+            #     ballDet = camera.findBall(image)
+            #     onBallDetect(ballDet, ballLocation)
+            # else:
+            #     ballLocation.value = -1
 
             # print "Volumelevel is:", audioVolume.value
             # changeLeds(audioVolume.value, "red")
 
-            print "Volumelevel is:", audioVolume.value
-            
+            # print "Volumelevel is:", audioVolume.value
+
             # give command to look around while the ball is not found
             if ballLocation == -1:
                 # movementQueue.value = 5
-                print "Volumelevel is:", audioVolume.value
-                # changeLeds(volumeLevel, "red")
+                print "RED - No ball found + vol :", audioVolume.value
+                changeLeds(volumeLevel, "red")
                 if ballFound:
                     ballFound = False
 
@@ -263,18 +284,20 @@ def main():
                     # movementQueue.value = -1
                     ballFound = True
 
-                # ball centerd, nothing to do
+                # ball centered, nothing to do
                 if ballLocation == 0:
-                    # changeLeds(audioVolume.value, "green")
+                    print "GREEN - Ball cenetered + vol :", audioVolume.value
+                    changeLeds(audioVolume.value, "green")
                     pass
 
                 # if not centered yet, center
                 elif ballLocation > 0:
+                    print "BLUE - Ball located but not centered + vol :", audioVolume.value
                     # movementQueue.value = ballLocation
-                    # changeLeds(audioVolume.value, "blue")
+                    changeLeds(audioVolume.value, "blue")
                     pass
 
-            sleep(0.2)
+            sleep(0.5)
             t += 0.2
 
         exitProcess.value = True
@@ -290,11 +313,11 @@ def main():
         # postureProxy.goToPosture("Sit", 0.6667)
         motionProxy.rest()
         # clean up other threads
-        volumeLevel.join()
-        # ballDetection.join()
+        volLevelProcess.join()
+        ballDetectionProcess.join()
         # movement.join()
-        print  "Is volMeasr alive?", volumeLevel.is_alive()
-        # print "Is ballDet alive?", ballDetection.is_alive()
+        print  "Is volMeasr alive?", volLevelProcess.is_alive()
+        print "Is ballDet alive?", ballDetectionProcess.is_alive()
         # print "Is movement alive?", movement.is_alive()
         sys.exit(0)
 

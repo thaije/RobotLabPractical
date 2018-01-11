@@ -1,7 +1,7 @@
 import sys
 from time import sleep
 from naoqi import ALProxy
-ip = "192.168.1.143"
+ip = "192.168.1.137"
 port = 9559
 
 try:

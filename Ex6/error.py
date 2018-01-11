@@ -2,21 +2,21 @@ import multiprocessing, Queue, time, signal, sys
 
 from naoqi import ALModule, ALProxy, ALBroker
 
-ip = "192.168.1.143"
+ip = "192.168.1.137"
 port = 9559
 
 global aud
-# LED = ALProxy("ALLeds", ip, port)
-# aud = ALProxy("ALAudioDevice", ip ,port )
-# aud.enableEnergyComputation()
+LED = ALProxy("ALLeds", ip, port)
+aud = ALProxy("ALAudioDevice", ip ,port )
+aud.enableEnergyComputation()
 
 def writer1(queue):
     name = multiprocessing.current_process().name
     print name, " Starting"
 
     # this without LED proxy works
-    aud = ALProxy("ALAudioDevice", ip ,port )
-    aud.enableEnergyComputation()
+    # aud = ALProxy("ALAudioDevice", ip ,port )
+    # aud.enableEnergyComputation()
 
 
     while True:
@@ -48,11 +48,11 @@ if __name__ == "__main__":
     try:
 
         q1 = multiprocessing.Queue()
-        writer1 = multiprocessing.Process(name = "writer1-proc", target=writer1, args=(q1,))
-        reader = multiprocessing.Process(name = "reader-proc", target=reader, args=(q1,))
+        wr1 = multiprocessing.Process(name = "writer1-proc", target=writer1, args=(q1,))
+        rd = multiprocessing.Process(name = "reader-proc", target=reader, args=(q1,))
 
-        writer1.start()
-        reader.start()
+        wr1.start()
+        rd.start()
 
         t=1
         while t < 4:
@@ -63,12 +63,12 @@ if __name__ == "__main__":
 
 
         # Just exit
-        writer1.terminate()
-        reader.terminate()
+        wr1.terminate()
+        rd.terminate()
 
         print "Done"
 
     except KeyboardInterrupt:
         print "Caught KeyboardInterrupt, terminating processes"
-        writer1.terminate()
-        reader.terminate()
+        wr1.terminate()
+        rd.terminate()

@@ -13,8 +13,8 @@ import multiprocessing, Queue, time, signal, sys
 
 q1 = None
 q2 = None
-writer1 = None
-writer2 = None
+wr1 = None
+wr2 = None
 reader = None
 exitProcess = False
 
@@ -40,7 +40,7 @@ def writer2(queue, exitProcess):
 
 
 def setup():
-    global q1, q2, writer1, writer2, reader, exitProcess
+    global q1, q2, wr1, wr2, reader, exitProcess
 
     manager = multiprocessing.Manager()
     exitProcess = manager.Value('i', False)
@@ -49,8 +49,8 @@ def setup():
 
     print "setup"
     q1 = multiprocessing.Queue()
-    writer1 = multiprocessing.Process(name = "writer1-proc", target=writer1, args=(q1,exitProcess))
-    writer2 = multiprocessing.Process(name = "writer2-proc", target=writer2, args=(q1,exitProcess))
+    wr1 = multiprocessing.Process(name = "writer1-proc", target=writer1, args=(q1,exitProcess))
+    wr2 = multiprocessing.Process(name = "writer2-proc", target=writer2, args=(q1,exitProcess))
 
 
 def exit():
@@ -63,8 +63,8 @@ def main():
     global exitProcess
 
     try:
-        writer1.start()
-        writer2.start()
+        wr1.start()
+        wr2.start()
         t=1
         while t < 4:
             time.sleep(1)
@@ -82,10 +82,10 @@ def main():
         print("Shutting down after sitting")
         exitProcess.value = True
         time.sleep(0.5)
-        writer1.join()
-        writer2.join()
-        print  "Is wr1 alive?", writer1.is_alive()
-        print "Is wr2 alive?", writer2.is_alive()
+        wr1.join()
+        wr2.join()
+        print  "Is wr1 alive?", wr1.is_alive()
+        print "Is wr2 alive?", wr2.is_alive()
         # pythonBroker.shutdown()
         sys.exit(0)
 

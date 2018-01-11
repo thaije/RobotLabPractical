@@ -82,11 +82,12 @@ def findBall(image):
         maxRadius = 100
     )
 
+
     # check if we found a ball, if so show it and return it
     if circles is not None:
         circle = circles[0, :][0]
         # print circle
-        # print "Ball at " , circle[0], ", ", circle[1], " with size", 2*circle[2]
+        print "Ball at " , circle[0], ", ", circle[1], " with size", 2*circle[2]
         cv2.circle(image, (circle[0], circle[1]), circle[2], (0, 255, 0), 2)
         cv2.imshow("Result", image)
         return (circle[0], circle[1])
