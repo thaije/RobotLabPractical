@@ -59,7 +59,7 @@ def findBall(image):
     kernel = np.ones((9,9), np.uint8)
 
     opening = cv2.morphologyEx(color_mask, cv2.MORPH_OPEN, kernel)
-    closing = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, kernel)
+    closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
 
     smoothed_mask = cv2.GaussianBlur(closing, (9,9), 0)
 
