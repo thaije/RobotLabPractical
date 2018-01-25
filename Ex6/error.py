@@ -1,3 +1,9 @@
+
+# This code gives the error:
+# qimessaging.remoteobject: no promise found for req
+
+# when using two proxies with multiprocessing on the Nao
+
 import multiprocessing, Queue, time, signal, sys
 
 from naoqi import ALModule, ALProxy, ALBroker
@@ -6,7 +12,7 @@ ip = "192.168.1.143"
 port = 9559
 
 global aud
-# LED = ALProxy("ALLeds", ip, port)
+LED = ALProxy("ALLeds", ip, port)
 # aud = ALProxy("ALAudioDevice", ip ,port )
 # aud.enableEnergyComputation()
 

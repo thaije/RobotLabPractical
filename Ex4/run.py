@@ -15,7 +15,7 @@ from naoqi import ALModule, ALProxy, ALBroker
 import chat
 
 # global variables
-ip = "192.168.1.143"
+ip = "192.168.1.137"
 port = 9559
 duration = 120
 
@@ -381,10 +381,10 @@ if __name__ == "__main__":
 
         print "Searching for face"
         # first focus on face before continuing
-        while faceTracking:
-            # (maybe) blink eyes, and sleep otherwise
-            wasteTimeHumanlike(0.25, ["blink"])
-        print "Face found"
+        # while faceTracking:
+        #     # (maybe) blink eyes, and sleep otherwise
+        #     wasteTimeHumanlike(0.25, ["blink"])
+        # print "Face found"
 
         tts.say("Hello, my name is Alice.")
         blinkEyes()
