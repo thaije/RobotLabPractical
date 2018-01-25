@@ -106,7 +106,7 @@ def setup():
     global pythonBroker, FaceDetector
 
     # Set robot to default posture
-    postureProxy.goToPosture("StandInit", 0.6667)
+    postureProxy.goToPosture("Sit", 0.6667)
     motionProxy.rest()
     motionProxy.setStiffnesses("Head", 0.8)
 
@@ -115,7 +115,7 @@ def setup():
 
 def main():
     setup()
-    intro()
+    # intro()
 
     gestures = ["Halt", "MapCheck", "DoubleTime"]
     try:
@@ -142,6 +142,7 @@ def main():
 
                 blinkEyes()
                 if response == g:
+                    score += 1
                     nodHead()
                     tts.say("Well done.")
                     break
@@ -178,7 +179,7 @@ def main():
         print "Unexpected error:", sys.exc_info()[0] , ": ", str(e)
     finally:
         print("Shutting down after sitting")
-        postureProxy.goToPosture("StandInit", 0.6667)
+        postureProxy.goToPosture("Sit", 0.6667)
         motionProxy.rest()
         pythonBroker.shutdown()
         sys.exit(0)
